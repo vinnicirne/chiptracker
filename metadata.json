@@ -1,0 +1,6 @@
+{
+  "name": "Chip Tracker Monitor",
+  "description": "Sistema de monitoramento automatizado para chips de rastreamento com logs no Supabase e alertas via Gmail.",
+  "requestFramePermissions": [],
+  "majorCapabilities": []
+}
