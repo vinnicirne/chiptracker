@@ -1,11 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
 
-const supabase = createClient(
-  process.env.VITE_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
-
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
@@ -19,11 +14,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (!supabaseUrl || !supabaseKey) {
     return res.status(500).json({ 
       success: false, 
-      error: 'Variáveis de ambiente do Supabase não configuradas.' 
+      error: 'CONFIG_MISSING',
+      message: 'VITE_SUPABASE_URL ou SUPABASE_SERVICE_ROLE_KEY não definidos.' 
     });
   }
 
   try {
+    const supabase = createClient(supabaseUrl, supabaseKey);
+    
     const [chipsRes, logsRes, alertsRes, rawLogsRes] = await Promise.all([
       supabase.from('chips').select('*').order('name'),
       supabase.from('chip_logs').select('*').order('created_at', { ascending: false }).limit(30),
@@ -44,7 +42,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
     });
   } catch (error: any) {
-    console.error('[API_ERROR]', error);
-    return res.status(500).json({ error: 'Erro interno', message: error.message });
+    return res.status(500).json({ error: 'INTERNAL_ERROR', details: error.message });
   }
 }
