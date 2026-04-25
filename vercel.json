@@ -1,0 +1,14 @@
+{
+  "crons": [
+    {
+      "path": "/api/watchdog",
+      "schedule": "0 0,12 * * *"
+    }
+  ],
+  "functions": {
+    "api/**/*.ts": {
+      "memory": 256,
+      "maxDuration": 30
+    }
+  }
+}
