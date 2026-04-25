@@ -53,10 +53,11 @@ interface Alert {
 }
 
 export default function App() {
-  const [data, setData] = useState<{ chips: Chip[]; recentLogs: Log[]; activeAlerts: Alert[] }>({
+  const [data, setData] = useState<{ chips: Chip[]; recentLogs: Log[]; activeAlerts: Alert[]; webhookRaw: any[] }>({
     chips: [],
     recentLogs: [],
     activeAlerts: [],
+    webhookRaw: [],
   });
   const [isLoading, setIsLoading] = useState(true);
   const [isChecking, setIsChecking] = useState(false);
@@ -113,7 +114,7 @@ export default function App() {
   const handleCheckNow = async () => {
     setIsChecking(true);
     try {
-      await fetch('/api/check-now', { method: 'POST' });
+      await fetch('/api/watchdog', { method: 'POST' });
       await fetchStatus();
       setFeedback({ type: 'success', msg: 'Watchdog executado!' });
     } catch (err) {
@@ -125,10 +126,10 @@ export default function App() {
 
   const handleSimulateSignal = async (chip_id: string) => {
     try {
-      await fetch('/api/simulate-signal', {
+      await fetch('/api/webhooks/signal', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ chip_id })
+        body: JSON.stringify({ chip_id, status: 'online', type: 'test_simulation' })
       });
       fetchStatus();
       setFeedback({ type: 'success', msg: 'Sinal simulado! O chip agora conta como ativo.' });
@@ -452,6 +453,47 @@ export default function App() {
                )}
             </div>
            </div>
+        </div>
+
+        {/* Webhook Raw Debug Section */}
+        <div className="space-y-4 pb-20">
+           <h2 className="text-lg font-bold flex items-center gap-2">
+              <Database className="w-5 h-5 text-sky-400" />
+              Diagnóstico de Sinais (Webhook Raw)
+            </h2>
+            <div className="bg-slate-900 shadow-xl rounded-2xl border border-slate-800 overflow-hidden">
+               <div className="p-4 bg-black/20 border-b border-slate-800 flex justify-between items-center">
+                  <p className="text-[10px] text-slate-500 uppercase font-black">Últimas comunicações brutas interceptadas</p>
+               </div>
+               <div className="divide-y divide-slate-800/50">
+                  {data.webhookRaw.length === 0 ? (
+                    <div className="p-12 text-center text-slate-700 italic">Aguardando sinais externos...</div>
+                  ) : (
+                    data.webhookRaw.map((raw, idx) => (
+                      <div key={`raw-${raw.id}-${idx}`} className="p-4 hover:bg-slate-800/20 transition-colors flex flex-col md:flex-row gap-4 justify-between">
+                        <div className="space-y-1 flex-1">
+                          <p className="text-[10px] font-mono text-slate-500">{new Date(raw.created_at).toLocaleString()}</p>
+                          <div className="bg-black/40 p-3 rounded-lg border border-slate-800/50 mt-1">
+                             <pre className="text-[10px] text-sky-400/80 overflow-x-auto whitespace-pre-wrap">
+                                {JSON.stringify(raw.payload, null, 2)}
+                             </pre>
+                          </div>
+                        </div>
+                         <div className="flex flex-col items-end gap-2 shrink-0">
+                            <span className="text-[9px] font-bold bg-slate-800 text-slate-400 px-2 py-0.5 rounded uppercase">
+                               {raw.method}
+                            </span>
+                            {raw.payload?.chip_id || raw.payload?.imei ? (
+                               <span className="text-[9px] text-emerald-500 font-black uppercase">✔ Reconhecido</span>
+                            ) : (
+                               <span className="text-[9px] text-amber-500 font-black uppercase">⚠ Desconhecido</span>
+                            )}
+                         </div>
+                      </div>
+                    ))
+                  )}
+               </div>
+            </div>
         </div>
 
       </div>

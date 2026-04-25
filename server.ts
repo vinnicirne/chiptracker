@@ -129,13 +129,19 @@ app.get("/api/status", async (req, res) => {
     const logsRes = await supabase.from('chip_logs').select('*').order('created_at', { ascending: false }).limit(30);
     if (logsRes.error) console.error("Erro ao buscar logs:", logsRes.error.message);
 
-    const alertsRes = await supabase.from('alerts').select('*').eq('resolved', false).order('created_at', { ascending: false });
+    const [alertsRes, rawLogsRes] = await Promise.all([
+      supabase.from('alerts').select('*').eq('resolved', false).order('created_at', { ascending: false }),
+      supabase.from('webhook_raw_logs').select('*').order('created_at', { ascending: false }).limit(15)
+    ]);
+
     if (alertsRes.error) console.error("Erro ao buscar alertas:", alertsRes.error.message);
+    if (rawLogsRes.error) console.error("Erro ao buscar raw logs:", rawLogsRes.error.message);
 
     res.json({
       chips: chipsRes.data || [],
       recentLogs: logsRes.data || [],
       activeAlerts: alertsRes.data || [],
+      webhookRaw: rawLogsRes.data || [],
       db_status: {
         chips: !chipsRes.error,
         logs: !logsRes.error,

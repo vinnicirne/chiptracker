@@ -18,16 +18,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       .select('*')
       .order('created_at', { ascending: false })
       .limit(30);
-    const alertsRes = await supabase
-      .from('alerts')
-      .select('*')
-      .eq('resolved', false)
-      .order('created_at', { ascending: false });
+    const [alertsRes, rawLogsRes] = await Promise.all([
+      supabase.from('alerts').select('*').eq('resolved', false).order('created_at', { ascending: false }),
+      supabase.from('webhook_raw_logs').select('*').order('created_at', { ascending: false }).limit(10)
+    ]);
 
     res.json({
       chips: chipsRes.data || [],
       recentLogs: logsRes.data || [],
       activeAlerts: alertsRes.data || [],
+      webhookRaw: rawLogsRes.data || [],
       db_status: {
         chips: !chipsRes.error,
         logs: !logsRes.error,
