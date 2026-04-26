@@ -13,10 +13,10 @@ module.exports = async (req, res) => {
 
   // POST /api/chips - cadastrar chip
   if (req.method === 'POST') {
-    const { id, name, api_url } = req.body;
+    const { id, name, api_url, phone } = req.body;
     const { error } = await supabase
       .from('chips')
-      .upsert([{ id, name, api_url }], { onConflict: 'id' });
+      .upsert([{ id, name, api_url, phone }], { onConflict: 'id' });
     if (error) return res.status(400).json(error);
     return res.json({ message: 'Chip registrado/atualizado' });
   }

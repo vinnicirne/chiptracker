@@ -34,6 +34,7 @@ interface Chip {
   id: string;
   name: string;
   api_url: string;
+  phone?: string;
 }
 
 interface Log {
@@ -62,7 +63,7 @@ export default function App() {
   const [isLoading, setIsLoading] = useState(true);
   const [isChecking, setIsChecking] = useState(false);
   const [showAddForm, setShowAddForm] = useState(false);
-  const [newChip, setNewChip] = useState({ id: '', name: '', api_url: '' });
+  const [newChip, setNewChip] = useState({ id: '', name: '', api_url: '', phone: '' });
   const [feedback, setFeedback] = useState<{ type: 'error' | 'success', msg: string } | null>(null);
 
   const API_BASE_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
@@ -102,7 +103,7 @@ export default function App() {
       const result = await res.json();
 
       if (res.ok) {
-        setNewChip({ id: '', name: '', api_url: '' });
+        setNewChip({ id: '', name: '', api_url: '', phone: '' });
         setShowAddForm(false);
         setFeedback({ type: 'success', msg: 'Chip registrado com sucesso!' });
         fetchStatus();
@@ -319,11 +320,11 @@ export default function App() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-[10px] text-slate-500 font-bold uppercase">URL/API do Chip (Opcional)</label>
+                  <label className="text-[10px] text-slate-500 font-bold uppercase">Número do Chip</label>
                   <input 
-                    value={newChip.api_url}
-                    onChange={e => setNewChip({...newChip, api_url: e.target.value})}
-                    placeholder="http://ip-do-chip/api" 
+                    value={newChip.phone}
+                    onChange={e => setNewChip({...newChip, phone: e.target.value})}
+                    placeholder="ex: 219999..." 
                     className="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2 text-sm focus:border-sky-500 outline-none"
                   />
                 </div>
@@ -361,7 +362,7 @@ export default function App() {
                   </div>
                   <div className="flex items-center gap-1.5 text-slate-400">
                     <Smartphone className="w-3.5 h-3.5" />
-                    <span className="truncate max-w-[100px]">{chip.api_url ? 'API Linked' : 'No URL'}</span>
+                    <span className="truncate max-w-[100px]">{chip.phone || 'Sem número'}</span>
                   </div>
                 </div>
                 <div className="mt-4 pt-4 border-t border-slate-800/50 grid grid-cols-2 gap-2">
