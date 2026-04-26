@@ -266,7 +266,7 @@ export default function App() {
               {feedback.msg}
             </motion.div>
           )}
-          {data.activeAlerts.length > 0 && (
+          {data?.activeAlerts?.length > 0 && (
             <motion.div 
               key="alerts-status-banner"
               initial={{ height: 0, opacity: 0 }}
@@ -337,8 +337,8 @@ export default function App() {
 
         {/* Chips Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {data.chips.map((chip, idx) => {
-            const lastLog = data.recentLogs.find(l => l.chip_id === chip.id);
+          {data?.chips?.map((chip, idx) => {
+            const lastLog = data?.recentLogs?.find(l => l.chip_id === chip.id);
             const isOnline = lastLog?.status === 'online';
             return (
               <div key={`chip-${chip.id}-${idx}`} className="bg-slate-900/50 border border-slate-800 rounded-2xl p-5 relative overflow-hidden group">
@@ -371,7 +371,7 @@ export default function App() {
                    </div>
                    <div className="text-center p-2 bg-slate-950/50 rounded-lg">
                       <p className="text-[9px] text-slate-500 uppercase font-bold">Logs</p>
-                      <p className="text-sm font-mono">{data.recentLogs.filter(l => l.chip_id === chip.id).length}</p>
+                      <p className="text-sm font-mono">{data?.recentLogs?.filter(l => l.chip_id === chip.id).length || 0}</p>
                    </div>
                 </div>
                 
@@ -403,7 +403,7 @@ export default function App() {
             </h2>
             <div className="bg-slate-900 shadow-xl rounded-2xl border border-slate-800 overflow-hidden">
                <div className="divide-y divide-slate-800">
-                {data.recentLogs.length === 0 ? (
+                {data?.recentLogs?.length === 0 ? (
                   <div className="p-8 text-center text-slate-500">Aguardando comunicações...</div>
                 ) : (
                   data.recentLogs.map((log, idx) => (
@@ -470,7 +470,7 @@ export default function App() {
                   <p className="text-[10px] text-slate-500 uppercase font-black">Últimas comunicações brutas interceptadas</p>
                </div>
                <div className="divide-y divide-slate-800/50">
-                  {data.webhookRaw.length === 0 ? (
+                  {data?.webhookRaw?.length === 0 ? (
                     <div className="p-12 text-center text-slate-700 italic">Aguardando sinais externos...</div>
                   ) : (
                     data.webhookRaw.map((raw, idx) => (
