@@ -1,6 +1,14 @@
 const { createClient } = require('@supabase/supabase-js');
+const nodemailer = require('nodemailer');
 
 module.exports = async (req, res) => {
+  const transporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+      user: process.env.GMAIL_USER,
+      pass: process.env.GMAIL_APP_PASSWORD,
+    },
+  });
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, GET, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
@@ -114,8 +122,31 @@ module.exports = async (req, res) => {
         }
       }]);
 
-      // Resolver alertas se o chip voltou
-      await supabase.from('alerts').update({ resolved: true }).eq('chip_id', chip_id).eq('resolved', false);
+    // Enviar E-mail se for um Alerta ou Evento de Ignição
+    const isAlert = body.alert || body.type?.toLowerCase().includes('ignition') || body.message;
+    if (isAlert && process.env.GMAIL_USER && process.env.ALERT_RECIPIENT_EMAIL) {
+      try {
+        const subject = `🚨 ALERTA: ${device_name || chip_id} - ${body.type || 'Evento'}`;
+        const html = `
+          <h3>Novo Alerta Detectado</h3>
+          <p><strong>Veículo:</strong> ${device_name || 'Desconhecido'}</p>
+          <p><strong>ID/IMEI:</strong> ${chip_id}</p>
+          <p><strong>Evento:</strong> ${body.type || 'N/A'}</p>
+          <p><strong>Mensagem:</strong> ${body.message || 'N/A'}</p>
+          <p><strong>Hora:</strong> ${body.time || new Date().toLocaleString()}</p>
+          <p><a href="https://chip-tracker-monitor.vercel.app">Ver no Dashboard</a></p>
+        `;
+
+        await transporter.sendMail({
+          from: `"Monitoramento Chip Watch" <${process.env.GMAIL_USER}>`,
+          to: process.env.ALERT_RECIPIENT_EMAIL,
+          subject: subject,
+          html: html,
+        });
+        console.log(`[MAIL] Alerta enviado para ${process.env.ALERT_RECIPIENT_EMAIL}`);
+      } catch (mailErr) {
+        console.error("Erro ao enviar e-mail de alerta", mailErr);
+      }
     }
 
     return res.status(200).json({ success: true, chip_id });

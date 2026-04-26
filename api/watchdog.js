@@ -29,7 +29,7 @@ module.exports = async (req, res) => {
     const { data: chips, error } = await supabase.from('chips').select('*');
     if (error || !chips) throw new Error(error?.message || 'Chips não encontrados');
 
-    const LIMITE_HORAS = 12;
+    const LIMITE_HORAS = 24;
     const now = new Date();
     let alertsGerados = 0;
 
@@ -71,10 +71,25 @@ module.exports = async (req, res) => {
           if (process.env.GMAIL_USER && process.env.ALERT_RECIPIENT_EMAIL) {
             try {
               await transporter.sendMail({
-                from: `Gestão de Frotas <${process.env.GMAIL_USER}>`,
+                from: `"Monitoramento Alerta" <${process.env.GMAIL_USER}>`,
                 to: process.env.ALERT_RECIPIENT_EMAIL,
-                subject: `🚨 ALERTA: ${chip.name} Offline`,
-                html: `<h3>${chip.name} parou de reportar.</h3><p>ID: ${chip.id}</p>`,
+                subject: `⚠️ ATENÇÃO: ${chip.name} Offline há mais de 24h`,
+                html: `
+                  <div style="font-family: sans-serif; border: 1px solid #ddd; padding: 20px; border-radius: 10px;">
+                    <h2 style="color: #e11d48;">⚠️ Veículo Fora de Alcance</h2>
+                    <p>O veículo <strong>${chip.name}</strong> está sem reportar sinal há mais de <strong>24 horas</strong>.</p>
+                    <hr />
+                    <p><strong>Detalhes do Dispositivo:</strong></p>
+                    <ul>
+                      <li><strong>Nome:</strong> ${chip.name}</li>
+                      <li><strong>IMEI/ID:</strong> ${chip.id}</li>
+                      <li><strong>Último sinal conhecido:</strong> ${lastSignal ? lastSignal.toLocaleString() : 'Nunca'}</li>
+                    </ul>
+                    <p style="margin-top: 20px;">
+                      <a href="https://chip-tracker-monitor.vercel.app" style="background: #2563eb; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Acessar Dashboard</a>
+                    </p>
+                  </div>
+                `,
               });
             } catch (mailErr) {
               console.error('Falha no envio de email', mailErr);
