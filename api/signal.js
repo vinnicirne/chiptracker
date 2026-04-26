@@ -31,34 +31,43 @@ module.exports = async (req, res) => {
 
   const body = payload;
 
-  // Extração inteligente de ID (DeepSeek Suggestion)
-  const directFields = [
-    'chip_id', 'imei', 'device_id', 'deviceId', 'identifier',
-    'id', 'tracker_id', 'trackerId', 'equipmentId', 'equipment_id',
-    'unitId', 'unit_id', 'vehicleId', 'vehicle_id', 'serialNumber', 'serial'
-  ];
-
+  // Extração inteligente de ID (Adaptada para SmartGPS)
   let chip_id = null;
-  for (const field of directFields) {
-    if (body[field]) {
-      chip_id = String(body[field]);
-      break;
+  let device_name = null;
+
+  // Prioridade 1: Formato detectado no seu Log (body.device.imei)
+  if (body.device && typeof body.device === 'object') {
+    chip_id = body.device.imei || body.device.id || body.device.deviceId;
+    device_name = body.device.name;
+    console.log(`[DEBUG] Detectado dispositivo no log: ${chip_id} (${device_name})`);
+  }
+
+  // Prioridade 2: Busca direta na raiz
+  if (!chip_id) {
+    const directFields = [
+      'chip_id', 'imei', 'device_id', 'deviceId', 'identifier',
+      'id', 'tracker_id', 'trackerId', 'serialNumber'
+    ];
+    for (const field of directFields) {
+      if (body[field]) {
+        chip_id = String(body[field]);
+        break;
+      }
     }
   }
 
-  // Tenta em objetos aninhados se falhar
+  // Se ainda não achou, tenta em outros objetos aninhados
   if (!chip_id) {
-    const nested = ['device', 'tracker', 'chip', 'unit', 'vehicle', 'equipment'];
+    const nested = ['tracker', 'chip', 'unit', 'vehicle', 'equipment'];
     for (const parent of nested) {
       if (body[parent] && typeof body[parent] === 'object') {
-        for (const field of directFields) {
-          if (body[parent][field]) {
-            chip_id = String(body[parent][field]);
-            break;
-          }
+        chip_id = body[parent].imei || body[parent].id || body[parent].deviceId || body[parent].chip_id;
+        if (chip_id) {
+          chip_id = String(chip_id);
+          device_name = device_name || body[parent].name;
+          break;
         }
       }
-      if (chip_id) break;
     }
   }
 
@@ -81,32 +90,33 @@ module.exports = async (req, res) => {
   }
 
   try {
-    // 1. Garante que o chip existe
-    const { data: existing } = await supabase
-      .from('chips')
-      .select('id')
-      .eq('id', chip_id)
-      .single();
+    // Auto-cadastro de novo chip (Deep Clean Nuclear)
+    if (chip_id) {
+      const { data: existingChip } = await supabase.from('chips').select('id').eq('id', chip_id).single();
+      if (!existingChip) {
+        await supabase.from('chips').insert([{
+          id: chip_id,
+          name: device_name || `Novo Chip ${chip_id.slice(-4)}`,
+          api_url: ''
+        }]);
+      }
 
-    if (!existing) {
-      await supabase.from('chips').insert([{
-        id: chip_id,
-        name: `Novo Chip (${chip_id.substring(0, 5)})`
+      // Registrar Log com status rico
+      const latitude = body.latitude || body.lat;
+      const longitude = body.longitude || body.lng || body.lon;
+
+      await supabase.from('chip_logs').insert([{
+        chip_id: chip_id,
+        status: 'online',
+        payload: { 
+          ...body,
+          location: latitude ? { lat: latitude, lng: longitude } : null
+        }
       }]);
+
+      // Resolver alertas se o chip voltou
+      await supabase.from('alerts').update({ resolved: true }).eq('chip_id', chip_id).eq('resolved', false);
     }
-
-    // 2. Registra o sinal online
-    await supabase.from('chip_logs').insert([{
-      chip_id: chip_id,
-      status: 'online',
-      payload: body
-    }]);
-
-    // 3. Resolve alertas pendentes
-    await supabase.from('alerts')
-      .update({ resolved: true })
-      .eq('chip_id', chip_id)
-      .eq('resolved', false);
 
     return res.status(200).json({ success: true, chip_id });
   } catch (error) {
