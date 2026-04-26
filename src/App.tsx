@@ -65,9 +65,13 @@ export default function App() {
   const [newChip, setNewChip] = useState({ id: '', name: '', api_url: '' });
   const [feedback, setFeedback] = useState<{ type: 'error' | 'success', msg: string } | null>(null);
 
+  const API_BASE_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
+    ? 'https://chiptracker.vercel.app' 
+    : '';
+
   const fetchStatus = async () => {
     try {
-      const res = await fetch('/api/status');
+      const res = await fetch(`${API_BASE_URL}/api/status`);
       if (!res.ok) throw new Error('Falha ao buscar status do servidor');
       const json = await res.json();
       setData(json);

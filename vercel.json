@@ -17,6 +17,10 @@
   },
   "rewrites": [
     {
+      "source": "/api/watchdog",
+      "destination": "/api/watchdog.js"
+    },
+    {
       "source": "/api/webhooks/signal",
       "destination": "/api/webhooks/signal.js"
     },
