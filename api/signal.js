@@ -12,7 +12,24 @@ module.exports = async (req, res) => {
     process.env.SUPABASE_SERVICE_ROLE_KEY
   );
 
-  const body = req.method === 'GET' ? req.query : (req.body || {});
+  // Captura TUDO: Body (JSON/Form) ou Query String (GET)
+  const payload = {
+    ...req.query,
+    ...(typeof req.body === 'object' ? req.body : {})
+  };
+
+  // TUDO que chegar, a gente salva nos logs brutos PRIMEIRO (para debug)
+  try {
+    await supabase.from('webhook_raw_logs').insert([{
+      payload: payload,
+      method: req.method,
+      headers: req.headers
+    }]);
+  } catch (err) {
+    console.error("FATAL: Erro ao salvar log bruto", err);
+  }
+
+  const body = payload;
 
   // Extração inteligente de ID (DeepSeek Suggestion)
   const directFields = [
