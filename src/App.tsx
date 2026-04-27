@@ -503,8 +503,8 @@ export default function App() {
                           </pre>
                         </div>
                       )}
-                    </React.Fragment>
-                  ))
+                      );
+                    })
                 )}
                </div>
             </div>
