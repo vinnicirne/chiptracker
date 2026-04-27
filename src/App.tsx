@@ -60,6 +60,21 @@ export default function App() {
     activeAlerts: [],
     webhookRaw: [],
   });
+
+  // Função para traduzir o log para o Suporte
+  const formatLogType = (type: string) => {
+    const types: Record<string, string> = {
+      'ignitionOn': '🔥 Ignição LIGADA',
+      'ignitionOff': '❄️ Ignição DESLIGADA',
+      'overspeed': '⚠️ Excesso de Velocidade',
+      'panico': '🚨 PÂNICO ATIVADO',
+      'lowBattery': '🪫 Bateria Baixa',
+      'test_simulation': '🧪 Sinal de Teste',
+      'movement': '🚗 Veículo em Movimento',
+      'stopped': '🛑 Veículo Parado',
+    };
+    return types[type] || type || 'Sinal Recebido';
+  };
   const [isLoading, setIsLoading] = useState(true);
   const [isChecking, setIsChecking] = useState(false);
   const [showAddForm, setShowAddForm] = useState(false);
@@ -343,10 +358,19 @@ export default function App() {
             const lastLog = data?.recentLogs?.find(l => l.chip_id === chip.id);
             const isOnline = lastLog?.status === 'online';
             return (
-              <div key={`chip-${chip.id}-${idx}`} className="bg-slate-900/50 border border-slate-800 rounded-2xl p-5 relative overflow-hidden group">
-                <div className="flex justify-between items-start mb-4">
+              <div 
+                key={chip.id} 
+                onClick={() => setSelectedChipId(selectedChipId === chip.id ? null : chip.id)}
+                className={cn(
+                  "relative group bg-slate-900 border transition-all duration-300 p-6 cursor-pointer",
+                  selectedChipId === chip.id ? "border-sky-500 ring-1 ring-sky-500/50 rounded-2xl shadow-[0_0_30px_-10px_rgba(14,165,233,0.3)]" : "border-slate-800 hover:border-slate-700 rounded-xl"
+                )}
+              >
+                <div className="flex items-start justify-between mb-4">
                   <div className="space-y-1">
-                    <h3 className="font-bold text-lg text-slate-100">{chip.name}</h3>
+                    <div className="flex items-center gap-2">
+                       <h3 className="text-lg font-black text-white tracking-tight">{chip.name}</h3>
+                    </div>
                     <p className="text-[10px] font-mono text-slate-500 uppercase tracking-widest">{chip.id}</p>
                   </div>
                   <div className={cn(
@@ -428,17 +452,32 @@ export default function App() {
                     .map((log, idx) => (
                     <div key={`log-${log.id}-${idx}`} className="p-4 flex items-center justify-between hover:bg-slate-800/20">
                       <div className="flex items-center gap-3">
-                        <div className={cn("w-2 h-2 rounded-full", log.status === 'online' ? 'bg-emerald-500' : 'bg-red-500')} />
+                        <div className={cn("w-2 h-2 rounded-full shadow-[0_0_10px_rgba(0,0,0,0.5)]", log.status === 'online' ? 'bg-emerald-500 shadow-emerald-500/50' : 'bg-red-500 shadow-red-500/50')} />
                         <div>
-                          <p className="text-xs font-bold">{log.chip_id}</p>
-                          <p className="text-[9px] text-slate-500 uppercase">
-                            {new Date(log.created_at).toLocaleString()} | {log.payload?.type || 'Signal'}
+                          <p className="text-xs font-bold text-slate-200">
+                            {formatLogType(log.payload?.type)}
+                          </p>
+                          <p className="text-[9px] text-slate-500 uppercase tracking-tighter">
+                            {new Date(log.created_at).toLocaleString()} | ID: {log.chip_id}
                           </p>
                         </div>
                       </div>
-                      <span className="text-[10px] bg-slate-800 px-2 py-1 rounded text-slate-400 font-mono">
-                        {log.status}
-                      </span>
+                      <div className="flex items-center gap-2">
+                        {log.payload?.location && (
+                          <a 
+                            href={`https://www.google.com/maps?q=${log.payload.location.lat},${log.payload.location.lng}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-[9px] bg-sky-500/10 text-sky-400 px-2 py-1 rounded hover:bg-sky-500 hover:text-white transition-all font-bold"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            VER MAPA
+                          </a>
+                        )}
+                        <span className="text-[10px] bg-slate-800 px-2 py-1 rounded text-slate-400 font-mono">
+                          {log.status === 'online' ? 'SINAL OK' : 'OFFLINE'}
+                        </span>
+                      </div>
                     </div>
                   ))
                 )}
