@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { useState, useEffect, type FormEvent } from 'react';
+import React, { useState, useEffect, type FormEvent } from 'react';
 import { 
   Activity, 
   AlertTriangle, 
