@@ -451,20 +451,24 @@ export default function App() {
                 ) : (
                   data.recentLogs
                     .filter(log => !selectedChipId || log.chip_id === selectedChipId)
-                    .map((log, idx) => (
-                    <React.Fragment key={`log-${log.id}-${idx}`}>
-                      <div className="p-4 flex items-center justify-between hover:bg-slate-800/20">
-                        <div className="flex items-center gap-3">
-                          <div className={cn("w-2 h-2 rounded-full shadow-[0_0_10px_rgba(0,0,0,0.5)]", log.status === 'online' ? 'bg-emerald-500 shadow-emerald-500/50' : 'bg-red-500 shadow-red-500/50')} />
-                          <div>
-                            <p className="text-xs font-bold text-slate-200">
-                              {formatLogType(log.payload?.type)}
-                            </p>
-                            <p className="text-[9px] text-slate-500 uppercase tracking-tighter">
-                              {new Date(log.created_at).toLocaleString()} | ID: {log.chip_id}
-                            </p>
-                          </div>
-                        </div>
+                    .map((log, idx) => {
+                      const chip = data.chips?.find(c => c.id === log.chip_id);
+                      const vehicleName = chip ? chip.name : log.chip_id;
+                      
+                      return (
+                        <React.Fragment key={`log-${log.id}-${idx}`}>
+                          <div className="p-4 flex items-center justify-between hover:bg-slate-800/20">
+                            <div className="flex items-center gap-3">
+                              <div className={cn("w-2 h-2 rounded-full shadow-[0_0_10px_rgba(0,0,0,0.5)]", log.status === 'online' ? 'bg-emerald-500 shadow-emerald-500/50' : 'bg-red-500 shadow-red-500/50')} />
+                              <div>
+                                <p className="text-xs font-bold text-slate-200">
+                                  {vehicleName}
+                                </p>
+                                <p className="text-[9px] text-slate-500 uppercase tracking-tighter">
+                                  {new Date(log.created_at).toLocaleString()} | {formatLogType(log.payload?.type)}
+                                </p>
+                              </div>
+                            </div>
                         <div className="flex items-center gap-2">
                           {log.payload?.location && (
                             <a 
