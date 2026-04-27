@@ -81,6 +81,7 @@ export default function App() {
   const [newChip, setNewChip] = useState({ id: '', name: '', api_url: '', phone: '' });
   const [feedback, setFeedback] = useState<{ type: 'error' | 'success', msg: string } | null>(null);
   const [selectedChipId, setSelectedChipId] = useState<string | null>(null);
+  const [expandedLogId, setExpandedLogId] = useState<number | null>(null);
 
   const API_BASE_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
     ? 'https://chiptracker.vercel.app' 
@@ -474,11 +475,29 @@ export default function App() {
                             VER MAPA
                           </a>
                         )}
+                        <button 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setExpandedLogId(expandedLogId === log.id ? null : log.id);
+                          }}
+                          className="p-1 hover:bg-slate-700 rounded transition-colors text-slate-500 hover:text-sky-400"
+                          title="Ver Log Técnico"
+                        >
+                          <Terminal className="w-3.5 h-3.5" />
+                        </button>
                         <span className="text-[10px] bg-slate-800 px-2 py-1 rounded text-slate-400 font-mono">
                           {log.status === 'online' ? 'SINAL OK' : 'OFFLINE'}
                         </span>
                       </div>
                     </div>
+                    {expandedLogId === log.id && (
+                      <div key={`expanded-${log.id}`} className="px-14 pb-4 animate-in fade-in slide-in-from-top-1">
+                        <pre className="bg-slate-950 p-3 rounded-lg text-[10px] text-sky-500 font-mono overflow-x-auto border border-sky-500/10">
+                          {JSON.stringify(log.payload || {}, null, 2)}
+                        </pre>
+                      </div>
+                    )}
+                  </>
                   ))
                 )}
                </div>
@@ -519,46 +538,6 @@ export default function App() {
            </div>
         </div>
 
-        {/* Webhook Raw Debug Section */}
-        <div className="space-y-4 pb-20">
-           <h2 className="text-lg font-bold flex items-center gap-2">
-              <Database className="w-5 h-5 text-sky-400" />
-              Diagnóstico de Sinais (Webhook Raw)
-            </h2>
-            <div className="bg-slate-900 shadow-xl rounded-2xl border border-slate-800 overflow-hidden">
-               <div className="p-4 bg-black/20 border-b border-slate-800 flex justify-between items-center">
-                  <p className="text-[10px] text-slate-500 uppercase font-black">Últimas comunicações brutas interceptadas</p>
-               </div>
-               <div className="divide-y divide-slate-800/50">
-                  {data?.webhookRaw?.length === 0 ? (
-                    <div className="p-12 text-center text-slate-700 italic">Aguardando sinais externos...</div>
-                  ) : (
-                    data.webhookRaw.map((raw, idx) => (
-                      <div key={`raw-${raw.id}-${idx}`} className="p-4 hover:bg-slate-800/20 transition-colors flex flex-col md:flex-row gap-4 justify-between">
-                        <div className="space-y-1 flex-1">
-                          <p className="text-[10px] font-mono text-slate-500">{new Date(raw.created_at).toLocaleString()}</p>
-                          <div className="bg-black/40 p-3 rounded-lg border border-slate-800/50 mt-1">
-                             <pre className="text-[10px] text-sky-400/80 overflow-x-auto whitespace-pre-wrap">
-                                {JSON.stringify(raw.payload, null, 2)}
-                             </pre>
-                          </div>
-                        </div>
-                         <div className="flex flex-col items-end gap-2 shrink-0">
-                            <span className="text-[9px] font-bold bg-slate-800 text-slate-400 px-2 py-0.5 rounded uppercase">
-                               {raw.method}
-                            </span>
-                            {raw.payload?.chip_id || raw.payload?.imei ? (
-                               <span className="text-[9px] text-emerald-500 font-black uppercase">✔ Reconhecido</span>
-                            ) : (
-                               <span className="text-[9px] text-amber-500 font-black uppercase">⚠ Desconhecido</span>
-                            )}
-                         </div>
-                      </div>
-                    ))
-                  )}
-               </div>
-            </div>
-        </div>
 
       </div>
     </div>
