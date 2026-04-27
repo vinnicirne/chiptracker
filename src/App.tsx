@@ -65,6 +65,7 @@ export default function App() {
   const [showAddForm, setShowAddForm] = useState(false);
   const [newChip, setNewChip] = useState({ id: '', name: '', api_url: '', phone: '' });
   const [feedback, setFeedback] = useState<{ type: 'error' | 'success', msg: string } | null>(null);
+  const [selectedChipId, setSelectedChipId] = useState<string | null>(null);
 
   const API_BASE_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
     ? 'https://chiptracker.vercel.app' 
@@ -370,10 +371,18 @@ export default function App() {
                       <p className="text-[9px] text-slate-500 uppercase font-bold">Bateria</p>
                       <p className="text-sm font-mono">{lastLog?.payload?.battery ?? '--'}%</p>
                    </div>
-                   <div className="text-center p-2 bg-slate-950/50 rounded-lg">
+                   <button 
+                      onClick={() => setSelectedChipId(selectedChipId === chip.id ? null : chip.id)}
+                      className={cn(
+                        "text-center p-2 rounded-lg transition-all border",
+                        selectedChipId === chip.id ? "bg-sky-500/20 border-sky-500/50" : "bg-slate-950/50 border-transparent hover:border-slate-700"
+                      )}
+                    >
                       <p className="text-[9px] text-slate-500 uppercase font-bold">Logs</p>
-                      <p className="text-sm font-mono">{data?.recentLogs?.filter(l => l.chip_id === chip.id).length || 0}</p>
-                   </div>
+                      <p className={cn("text-sm font-mono", selectedChipId === chip.id ? "text-sky-400" : "")}>
+                        {data?.recentLogs?.filter(l => l.chip_id === chip.id).length || 0}
+                      </p>
+                   </button>
                 </div>
                 
                 <div className="mt-3 flex gap-2">
@@ -398,22 +407,33 @@ export default function App() {
         {/* Activity & Alerts Section */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 pb-12">
            <div className="space-y-4">
-            <h2 className="text-lg font-bold flex items-center gap-2">
-              <Activity className="w-5 h-5 text-sky-500" />
-              Logs Recentes (Supabase)
-            </h2>
+             <div className="flex items-center justify-between">
+              <h2 className="text-lg font-bold flex items-center gap-2">
+                <Activity className="w-5 h-5 text-sky-500" />
+                {selectedChipId ? 'Filtrando Dispositivo' : 'Logs Recentes (Supabase)'}
+              </h2>
+              {selectedChipId && (
+                <button onClick={() => setSelectedChipId(null)} className="text-[10px] text-sky-400 font-bold uppercase hover:underline">
+                  Ver Todos
+                </button>
+              )}
+            </div>
             <div className="bg-slate-900 shadow-xl rounded-2xl border border-slate-800 overflow-hidden">
-               <div className="divide-y divide-slate-800">
-                {data?.recentLogs?.length === 0 ? (
-                  <div className="p-8 text-center text-slate-500">Aguardando comunicações...</div>
+               <div className="divide-y divide-slate-800 max-h-[400px] overflow-y-auto">
+                {data?.recentLogs?.filter(l => !selectedChipId || l.chip_id === selectedChipId).length === 0 ? (
+                  <div className="p-8 text-center text-slate-500">Nenhum log encontrado para este filtro.</div>
                 ) : (
-                  data.recentLogs.map((log, idx) => (
+                  data.recentLogs
+                    .filter(log => !selectedChipId || log.chip_id === selectedChipId)
+                    .map((log, idx) => (
                     <div key={`log-${log.id}-${idx}`} className="p-4 flex items-center justify-between hover:bg-slate-800/20">
                       <div className="flex items-center gap-3">
                         <div className={cn("w-2 h-2 rounded-full", log.status === 'online' ? 'bg-emerald-500' : 'bg-red-500')} />
                         <div>
                           <p className="text-xs font-bold">{log.chip_id}</p>
-                          <p className="text-[9px] text-slate-500 uppercase">{new Date(log.created_at).toLocaleString()}</p>
+                          <p className="text-[9px] text-slate-500 uppercase">
+                            {new Date(log.created_at).toLocaleString()} | {log.payload?.type || 'Signal'}
+                          </p>
                         </div>
                       </div>
                       <span className="text-[10px] bg-slate-800 px-2 py-1 rounded text-slate-400 font-mono">
