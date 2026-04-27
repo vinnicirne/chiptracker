@@ -454,55 +454,52 @@ export default function App() {
                     .map((log, idx) => {
                       const chip = data.chips?.find(c => c.id === log.chip_id);
                       const vehicleName = chip ? chip.name : log.chip_id;
-                      
                       return (
                         <React.Fragment key={`log-${log.id}-${idx}`}>
                           <div className="p-4 flex items-center justify-between hover:bg-slate-800/20">
                             <div className="flex items-center gap-3">
                               <div className={cn("w-2 h-2 rounded-full shadow-[0_0_10px_rgba(0,0,0,0.5)]", log.status === 'online' ? 'bg-emerald-500 shadow-emerald-500/50' : 'bg-red-500 shadow-red-500/50')} />
                               <div>
-                                <p className="text-xs font-bold text-slate-200">
-                                  {vehicleName}
-                                </p>
+                                <p className="text-xs font-bold text-slate-200">{vehicleName}</p>
                                 <p className="text-[9px] text-slate-500 uppercase tracking-tighter">
                                   {new Date(log.created_at).toLocaleString()} | {formatLogType(log.payload?.type)}
                                 </p>
                               </div>
                             </div>
-                        <div className="flex items-center gap-2">
-                          {log.payload?.location && (
-                            <a 
-                              href={`https://www.google.com/maps?q=${log.payload.location.lat},${log.payload.location.lng}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-[9px] bg-sky-500/10 text-sky-400 px-2 py-1 rounded hover:bg-sky-500 hover:text-white transition-all font-bold"
-                              onClick={(e) => e.stopPropagation()}
-                            >
-                              VER MAPA
-                            </a>
+                            <div className="flex items-center gap-2">
+                              {log.payload?.location && (
+                                <a 
+                                  href={`https://www.google.com/maps?q=${log.payload.location.lat},${log.payload.location.lng}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-[9px] bg-sky-500/10 text-sky-400 px-2 py-1 rounded hover:bg-sky-500 hover:text-white transition-all font-bold"
+                                  onClick={(e) => e.stopPropagation()}
+                                >
+                                  VER MAPA
+                                </a>
+                              )}
+                              <button 
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setExpandedLogId(expandedLogId === log.id ? null : log.id);
+                                }}
+                                className="p-1 hover:bg-slate-700 rounded transition-colors text-slate-500 hover:text-sky-400"
+                              >
+                                <Terminal className="w-3.5 h-3.5" />
+                              </button>
+                              <span className="text-[10px] bg-slate-800 px-2 py-1 rounded text-slate-400 font-mono">
+                                {log.status === 'online' ? 'SINAL OK' : 'OFFLINE'}
+                              </span>
+                            </div>
+                          </div>
+                          {expandedLogId === log.id && (
+                            <div className="px-14 pb-4 animate-in fade-in slide-in-from-top-1">
+                              <pre className="bg-slate-950 p-3 rounded-lg text-[10px] text-sky-500 font-mono overflow-x-auto border border-sky-500/10">
+                                {JSON.stringify(log.payload || {}, null, 2)}
+                              </pre>
+                            </div>
                           )}
-                          <button 
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setExpandedLogId(expandedLogId === log.id ? null : log.id);
-                            }}
-                            className="p-1 hover:bg-slate-700 rounded transition-colors text-slate-500 hover:text-sky-400"
-                            title="Ver Log Técnico"
-                          >
-                            <Terminal className="w-3.5 h-3.5" />
-                          </button>
-                          <span className="text-[10px] bg-slate-800 px-2 py-1 rounded text-slate-400 font-mono">
-                            {log.status === 'online' ? 'SINAL OK' : 'OFFLINE'}
-                          </span>
-                        </div>
-                      </div>
-                      {expandedLogId === log.id && (
-                        <div className="px-14 pb-4 animate-in fade-in slide-in-from-top-1">
-                          <pre className="bg-slate-950 p-3 rounded-lg text-[10px] text-sky-500 font-mono overflow-x-auto border border-sky-500/10">
-                            {JSON.stringify(log.payload || {}, null, 2)}
-                          </pre>
-                        </div>
-                      )}
+                        </React.Fragment>
                       );
                     })
                 )}
