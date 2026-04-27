@@ -20,7 +20,8 @@ import {
   Settings,
   Shield,
   Copy,
-  Zap
+  Zap,
+  Terminal
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { clsx, type ClassValue } from 'clsx';
